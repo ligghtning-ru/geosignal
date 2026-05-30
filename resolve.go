@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+// Resolve turns source observations into a conservative user-facing display.
+// It prefers honest broader labels over precise city labels that are not
+// supported by the observations.
 func Resolve(observations []Observation, primary Observation, opts ...Option) Display {
 	c := newConfig(opts)
 	rows := normalizeObservations(observations, c)

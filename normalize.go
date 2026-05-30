@@ -141,7 +141,7 @@ func normalizeObservation(item Observation, c config) Observation {
 	item.Source = strings.TrimSpace(item.Source)
 	item.City = normalizeCity(item.City, c)
 	item.Country = normalizeCountry(item.Country, c)
-	item.Timezone = CanonicalTimezone(item.Timezone, WithTimezoneAliases(c.timezoneAliases))
+	item.Timezone = canonicalTimezone(item.Timezone, c.timezoneAliases)
 	if item.Count <= 0 {
 		item.Count = 1
 	}

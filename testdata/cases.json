@@ -3,8 +3,8 @@
     "name": "nearby city cluster",
     "primary": {"city": "Lviv", "country": "UA"},
     "observations": [
-      {"source": "provider_a", "city": "Lviv", "country": "UA", "lat": 49.8397, "lng": 24.0297, "hasCoord": true},
-      {"source": "provider_b", "city": "Vynnyky", "country": "UA", "lat": 49.8156, "lng": 24.1297, "hasCoord": true}
+      {"source": "provider_a", "city": "Lviv", "country": "UA", "lat": 49.8397, "lng": 24.0297, "has_coord": true},
+      {"source": "provider_b", "city": "Vynnyky", "country": "UA", "lat": 49.8156, "lng": 24.1297, "has_coord": true}
     ],
     "want": {"kind": "region_cluster", "label": "Lviv area, UA", "city": "Lviv"}
   },
@@ -12,9 +12,9 @@
     "name": "far same-country disagreement",
     "primary": {"city": "Dallas", "country": "US"},
     "observations": [
-      {"source": "provider_a", "city": "Dallas", "country": "US", "lat": 32.7767, "lng": -96.797, "hasCoord": true},
-      {"source": "provider_b", "city": "San Diego", "country": "US", "lat": 32.7157, "lng": -117.1611, "hasCoord": true},
-      {"source": "provider_c", "city": "New Brunswick", "country": "US", "lat": 40.4862, "lng": -74.4518, "hasCoord": true}
+      {"source": "provider_a", "city": "Dallas", "country": "US", "lat": 32.7767, "lng": -96.797, "has_coord": true},
+      {"source": "provider_b", "city": "San Diego", "country": "US", "lat": 32.7157, "lng": -117.1611, "has_coord": true},
+      {"source": "provider_c", "city": "New Brunswick", "country": "US", "lat": 40.4862, "lng": -74.4518, "has_coord": true}
     ],
     "want": {"kind": "ambiguous_city", "label": "US", "city": ""}
   },
@@ -22,8 +22,8 @@
     "name": "cross-country disagreement",
     "primary": {"city": "São Paulo", "country": "BR"},
     "observations": [
-      {"source": "provider_a", "city": "São Paulo", "country": "BR", "lat": -23.5505, "lng": -46.6333, "hasCoord": true},
-      {"source": "provider_b", "city": "Los Angeles", "country": "US", "lat": 34.0522, "lng": -118.2437, "hasCoord": true}
+      {"source": "provider_a", "city": "São Paulo", "country": "BR", "lat": -23.5505, "lng": -46.6333, "has_coord": true},
+      {"source": "provider_b", "city": "Los Angeles", "country": "US", "lat": 34.0522, "lng": -118.2437, "has_coord": true}
     ],
     "want": {"kind": "ambiguous_country", "label": "Location varies by source", "city": ""}
   }

@@ -19,6 +19,8 @@ type config struct {
 	countryTimezones map[string]map[string]struct{}
 }
 
+// WithSameCityRadiusKM changes the maximum distance for collapsing different
+// city names into one precise city.
 func WithSameCityRadiusKM(km float64) Option {
 	return func(c *config) {
 		if km > 0 {
@@ -27,6 +29,7 @@ func WithSameCityRadiusKM(km float64) Option {
 	}
 }
 
+// WithRegionRadiusKM changes the maximum distance for showing an "area" label.
 func WithRegionRadiusKM(km float64) Option {
 	return func(c *config) {
 		if km > 0 {
@@ -35,6 +38,7 @@ func WithRegionRadiusKM(km float64) Option {
 	}
 }
 
+// WithCityAlias adds or overrides a city spelling alias.
 func WithCityAlias(alias, canonical string) Option {
 	return func(c *config) {
 		alias = cityKeyRaw(alias)
@@ -45,6 +49,20 @@ func WithCityAlias(alias, canonical string) Option {
 	}
 }
 
+// WithCityAliases adds or overrides multiple city spelling aliases.
+func WithCityAliases(aliases map[string]string) Option {
+	return func(c *config) {
+		for alias, canonical := range aliases {
+			alias = cityKeyRaw(alias)
+			canonical = strings.TrimSpace(canonical)
+			if alias != "" && canonical != "" {
+				c.cityAliases[alias] = canonical
+			}
+		}
+	}
+}
+
+// WithCountryAlias adds or overrides a country name to ISO-2 mapping.
 func WithCountryAlias(alias, iso2 string) Option {
 	return func(c *config) {
 		alias = countryNameKey(alias)
@@ -55,6 +73,20 @@ func WithCountryAlias(alias, iso2 string) Option {
 	}
 }
 
+// WithCountryAliases adds or overrides multiple country name mappings.
+func WithCountryAliases(aliases map[string]string) Option {
+	return func(c *config) {
+		for alias, iso2 := range aliases {
+			alias = countryNameKey(alias)
+			iso2 = strings.ToUpper(strings.TrimSpace(iso2))
+			if alias != "" && len(iso2) == 2 {
+				c.countryAliases[alias] = iso2
+			}
+		}
+	}
+}
+
+// WithCitySuffix adds a suffix stripped during city normalization.
 func WithCitySuffix(suffix string) Option {
 	return func(c *config) {
 		suffix = cityKeyRaw(suffix)
@@ -68,16 +100,27 @@ func defaultConfig() config {
 	return config{
 		sameCityRadiusKM: defaultSameCityRadiusKM,
 		regionRadiusKM:   defaultRegionRadiusKM,
+		cityAliases:      defaultCityAliases,
+		countryAliases:   defaultCountryAliases,
+		citySuffixes:     defaultCitySuffixes,
+		timezoneAliases:  defaultTimezoneAliases,
+		countryTimezones: defaultCountryTimezones,
+	}
+}
+
+func newConfig(opts []Option) config {
+	if len(opts) == 0 {
+		return defaultConfig()
+	}
+	c := config{
+		sameCityRadiusKM: defaultSameCityRadiusKM,
+		regionRadiusKM:   defaultRegionRadiusKM,
 		cityAliases:      copyStringMap(defaultCityAliases),
 		countryAliases:   copyStringMap(defaultCountryAliases),
 		citySuffixes:     append([]string(nil), defaultCitySuffixes...),
 		timezoneAliases:  copyStringMap(defaultTimezoneAliases),
 		countryTimezones: copyTimezoneSets(defaultCountryTimezones),
 	}
-}
-
-func newConfig(opts []Option) config {
-	c := defaultConfig()
 	for _, opt := range opts {
 		if opt != nil {
 			opt(&c)

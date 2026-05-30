@@ -5,6 +5,16 @@ import (
 	"strings"
 )
 
+// ResolveWithAgreement resolves a display and immediately computes agreement
+// metadata against the same observations.
+func ResolveWithAgreement(observations []Observation, primary Observation, opts ...Option) (Display, Agreement) {
+	display := Resolve(observations, primary, opts...)
+	return display, AgreementForDisplay(display, observations, opts...)
+}
+
+// AgreementForDisplay compares source observations with a resolved display.
+// Source observations are not merged here, so SourceCount stays useful for UI,
+// logs, and debugging.
 func AgreementForDisplay(display Display, observations []Observation, opts ...Option) Agreement {
 	c := newConfig(opts)
 	rows := normalizeAgreementObservations(observations, c)

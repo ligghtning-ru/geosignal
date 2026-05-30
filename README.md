@@ -2,6 +2,7 @@
 
 [![ci](https://github.com/ligghtning-ru/geosignal/actions/workflows/ci.yml/badge.svg)](https://github.com/ligghtning-ru/geosignal/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/ligghtning-ru/geosignal.svg)](https://pkg.go.dev/github.com/ligghtning-ru/geosignal)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 `geosignal` is a small Go library for turning conflicting IP geolocation
 observations into honest user-facing labels.
@@ -11,6 +12,11 @@ districts, old city spellings, city-level drift, or entirely different
 countries. This package helps backend services avoid confidently showing a
 precise city when the evidence does not support it.
 
+## Status
+
+`geosignal` is intentionally small and stable. The public API is designed around
+plain structs, deterministic output, and no external services.
+
 ## What It Does
 
 - Normalizes common city aliases and spellings.
@@ -19,6 +25,22 @@ precise city when the evidence does not support it.
 - Treats cross-country disagreement as ambiguous.
 - Exposes agreement metadata for UI, logs, and debugging.
 - Includes timezone compatibility helpers for IANA aliases and same-offset zones.
+
+## Design Goals
+
+- Be conservative by default.
+- Keep all logic offline and deterministic.
+- Make disagreement visible instead of hiding it behind a single provider.
+- Keep provider-specific policy outside the package.
+- Prefer a small API over a configurable framework.
+
+## Non-Goals
+
+- No external API calls.
+- No IP reputation, proxy, VPN, or fraud verdicts.
+- No provider scoring.
+- No MaxMind/IP2Location/IPInfo clients.
+- No database or cache layer.
 
 ## Install
 
@@ -102,6 +124,27 @@ fmt.Println(display.Label)
 fmt.Println(agreement.ObservedCities)
 ```
 
+## API Overview
+
+```go
+display := geosignal.Resolve(observations, primary)
+
+display, agreement := geosignal.ResolveWithAgreement(observations, primary)
+
+ok := geosignal.TimezonesCompatible("Europe/Kiev", "Europe/Kyiv", "UA", time.Now())
+```
+
+Configuration is passed explicitly with options:
+
+```go
+display := geosignal.Resolve(
+	observations,
+	primary,
+	geosignal.WithCityAlias("SPB", "Saint Petersburg"),
+	geosignal.WithRegionRadiusKM(35),
+)
+```
+
 ## Display Kinds
 
 | Kind | Meaning |
@@ -135,6 +178,30 @@ Many systems turn provider output into a confident city too early. That creates
 bad UX and misleading decisions. `geosignal` is intentionally conservative: it
 prefers a slightly broader label over a precise label that is not supported by
 the observations.
+
+## Development
+
+```bash
+go test ./...
+go vet ./...
+go test -run TestDoesNotExist -bench . -benchmem -count=1
+```
+
+Tests live next to the package source, which is the standard Go layout for small
+libraries. Examples are also included as GoDoc examples, so they render on
+pkg.go.dev.
+
+## Package Layout
+
+The repository keeps one import path:
+
+```go
+import "github.com/ligghtning-ru/geosignal"
+```
+
+Source files are split by responsibility (`resolve`, `normalize`, `agreement`,
+`timezone`, `distance`, `options`, `types`) while staying in one package. This
+keeps the public API compact and idiomatic for Go users.
 
 ## License
 

@@ -27,6 +27,7 @@ type timezoneConfig struct {
 	countryTimezones map[string]map[string]struct{}
 }
 
+// WithTimezoneAlias adds or overrides a timezone alias.
 func WithTimezoneAlias(alias, canonical string) TimezoneOption {
 	return func(c *timezoneConfig) {
 		alias = timezoneKey(alias)
@@ -37,6 +38,21 @@ func WithTimezoneAlias(alias, canonical string) TimezoneOption {
 	}
 }
 
+// WithCountryTimezones replaces the compatible timezone set for a country.
+func WithCountryTimezones(country string, zones ...string) TimezoneOption {
+	return func(c *timezoneConfig) {
+		country = strings.ToUpper(strings.TrimSpace(country))
+		if country == "" {
+			return
+		}
+		set := timezoneSet(zones...)
+		if len(set) > 0 {
+			c.countryTimezones[country] = set
+		}
+	}
+}
+
+// WithTimezoneAliases adds or overrides multiple timezone aliases.
 func WithTimezoneAliases(aliases map[string]string) TimezoneOption {
 	return func(c *timezoneConfig) {
 		for alias, canonical := range aliases {
@@ -49,22 +65,29 @@ func WithTimezoneAliases(aliases map[string]string) TimezoneOption {
 	}
 }
 
+// CanonicalTimezone returns the current spelling for known IANA aliases.
 func CanonicalTimezone(name string, opts ...TimezoneOption) string {
 	c := newTimezoneConfig(opts)
+	return canonicalTimezone(name, c.aliases)
+}
+
+func canonicalTimezone(name string, aliases map[string]string) string {
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return ""
 	}
-	if canonical := c.aliases[timezoneKey(name)]; canonical != "" {
+	if canonical := aliases[timezoneKey(name)]; canonical != "" {
 		return canonical
 	}
 	return name
 }
 
+// TimezonesCompatible reports whether two timezone names should be treated as
+// the same user-facing signal for a country and instant.
 func TimezonesCompatible(a, b, country string, at time.Time, opts ...TimezoneOption) bool {
 	c := newTimezoneConfig(opts)
-	a = CanonicalTimezone(a, WithTimezoneAliases(c.aliases))
-	b = CanonicalTimezone(b, WithTimezoneAliases(c.aliases))
+	a = canonicalTimezone(a, c.aliases)
+	b = canonicalTimezone(b, c.aliases)
 	if a == "" || b == "" {
 		return false
 	}
@@ -74,8 +97,14 @@ func TimezonesCompatible(a, b, country string, at time.Time, opts ...TimezoneOpt
 	return countryTimezoneCompatible(country, a, b, c)
 }
 
+// TimezoneOffsetMinutes returns the UTC offset for a timezone at a given instant.
 func TimezoneOffsetMinutes(name string, at time.Time, opts ...TimezoneOption) (int, bool) {
-	name = CanonicalTimezone(name, opts...)
+	c := newTimezoneConfig(opts)
+	return timezoneOffsetMinutes(name, at, c.aliases)
+}
+
+func timezoneOffsetMinutes(name string, at time.Time, aliases map[string]string) (int, bool) {
+	name = canonicalTimezone(name, aliases)
 	if name == "" {
 		return 0, false
 	}
@@ -88,6 +117,12 @@ func TimezoneOffsetMinutes(name string, at time.Time, opts ...TimezoneOption) (i
 }
 
 func newTimezoneConfig(opts []TimezoneOption) timezoneConfig {
+	if len(opts) == 0 {
+		return timezoneConfig{
+			aliases:          defaultTimezoneAliases,
+			countryTimezones: defaultCountryTimezones,
+		}
+	}
 	c := timezoneConfig{
 		aliases:          copyStringMap(defaultTimezoneAliases),
 		countryTimezones: copyTimezoneSets(defaultCountryTimezones),
@@ -102,11 +137,11 @@ func newTimezoneConfig(opts []TimezoneOption) timezoneConfig {
 
 func sameOffsetSignature(a, b string, at time.Time, c timezoneConfig) bool {
 	for _, point := range signaturePoints(at) {
-		ao, ok := TimezoneOffsetMinutes(a, point, WithTimezoneAliases(c.aliases))
+		ao, ok := timezoneOffsetMinutes(a, point, c.aliases)
 		if !ok {
 			return false
 		}
-		bo, ok := TimezoneOffsetMinutes(b, point, WithTimezoneAliases(c.aliases))
+		bo, ok := timezoneOffsetMinutes(b, point, c.aliases)
 		if !ok || ao != bo {
 			return false
 		}

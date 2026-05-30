@@ -35,6 +35,7 @@ func allPairsWithin(rows []Observation, km float64) bool {
 	return true
 }
 
+// DistanceKM returns the great-circle distance between two coordinates.
 func DistanceKM(lat1, lng1, lat2, lng2 float64) float64 {
 	const earthRadiusKM = 6371.0
 	toRad := func(v float64) float64 { return v * math.Pi / 180 }
